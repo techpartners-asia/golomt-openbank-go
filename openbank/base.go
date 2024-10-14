@@ -27,6 +27,7 @@ type Openbank interface {
 	AccountList(body AccountListReq) (AccountListResp, error)
 	AccountTypeInq(body AccountTypeInqReq) (AccountTypeInqResp, error)
 	AccountBalcInq(body AccountBalcInqReq) (AccountBalcInqResp, error)
+	UtilityRateInq() (RateResp, error)
 }
 
 func New(username, password, client_id, orgname, ivKey, sessoinKey, url, registerNo string) Openbank {
@@ -76,6 +77,7 @@ func New(username, password, client_id, orgname, ivKey, sessoinKey, url, registe
 // 	return response, err
 // }
 
+// Харилцах дансны хуулга харах
 func (golomt *openbank) Statement(body StatementReq) (StatementResp, error) {
 
 	// body := StatementReq{
@@ -95,7 +97,7 @@ func (golomt *openbank) Statement(body StatementReq) (StatementResp, error) {
 	res, err := golomt.HttpRequest(body, StatementApi, "")
 	if err != nil {
 		var errorBody ErrorResp
-		err = json.Unmarshal([]byte(err.Error()), &errorBody)
+		json.Unmarshal([]byte(err.Error()), &errorBody)
 
 		return StatementResp{}, errors.New(errorBody.Message + " :" + errorBody.DebugMessage)
 	}
@@ -115,6 +117,7 @@ func (golomt *openbank) Statement(body StatementReq) (StatementResp, error) {
 	// return response, err
 }
 
+// Дансны жагсаалт татах
 func (golomt *openbank) AccountList(body AccountListReq) (AccountListResp, error) {
 
 	// body := AccountListReq{
@@ -134,7 +137,7 @@ func (golomt *openbank) AccountList(body AccountListReq) (AccountListResp, error
 	res, err := golomt.HttpRequest(body, AccountListApi, "")
 	if err != nil {
 		var errorBody ErrorResp
-		err = json.Unmarshal([]byte(err.Error()), &errorBody)
+		json.Unmarshal([]byte(err.Error()), &errorBody)
 		return AccountListResp{}, errors.New(errorBody.Message + " :" + errorBody.DebugMessage)
 	}
 	var response AccountListResp
@@ -153,6 +156,7 @@ func (golomt *openbank) AccountList(body AccountListReq) (AccountListResp, error
 	return response, err
 }
 
+// Дансны төрөл шалгах
 func (golomt *openbank) AccountTypeInq(body AccountTypeInqReq) (AccountTypeInqResp, error) {
 
 	// body := AccountTypeInqReq{
@@ -162,7 +166,7 @@ func (golomt *openbank) AccountTypeInq(body AccountTypeInqReq) (AccountTypeInqRe
 
 	if err != nil {
 		var errorBody ErrorResp
-		err = json.Unmarshal([]byte(resp), &errorBody)
+		json.Unmarshal([]byte(err.Error()), &errorBody)
 		return AccountTypeInqResp{}, errors.New(errorBody.Message + " :" + errorBody.DebugMessage)
 	}
 	var response AccountTypeInqResp
@@ -180,7 +184,7 @@ func (golomt *openbank) AccountBalcInq(body AccountBalcInqReq) (AccountBalcInqRe
 
 	if err != nil {
 		var errorBody ErrorResp
-		err = json.Unmarshal([]byte(resp), &errorBody)
+		json.Unmarshal([]byte(err.Error()), &errorBody)
 		return AccountBalcInqResp{}, errors.New(errorBody.Message + " :" + errorBody.DebugMessage)
 	}
 	var response AccountBalcInqResp
@@ -188,6 +192,26 @@ func (golomt *openbank) AccountBalcInq(body AccountBalcInqReq) (AccountBalcInqRe
 	if err != nil {
 		fmt.Println(err.Error())
 		return AccountBalcInqResp{}, err
+	}
+	return response, err
+}
+
+// Ханшны мэдээлэл авах
+func (golomt *openbank) UtilityRateInq() (RateResp, error) {
+	body := RateReq{
+		Currency: "MNT",
+	}
+	resp, err := golomt.HttpRequestSimple(body, UtilityRateAPI, "")
+	if err != nil {
+		var errorBody ErrorResp
+		json.Unmarshal([]byte(err.Error()), &errorBody)
+		return RateResp{}, errors.New(errorBody.Message + " :" + errorBody.DebugMessage)
+	}
+	var response RateResp
+	err = json.Unmarshal([]byte(resp), &response)
+	if err != nil {
+		fmt.Println(err.Error())
+		return RateResp{}, err
 	}
 	return response, err
 }

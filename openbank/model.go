@@ -143,4 +143,22 @@ type (
 	// 	Scope        string `json:"scope"`        // Тус хүсэлтийг encrypt хийсэн утга
 	// 	State        string `json:"state"`        // Дахин давтагдашгүй дугаар бөгөөд тус хүсэлтийг илтгэнэ.
 	// }
+	RateReq struct {
+		Currency string `json:"currency"` // Валют
+	}
+	RateResp struct {
+		RequestID  string     `json:"requestId"`
+		Date       string     `json:"date"`
+		Sequence   int        `json:"sequence"`
+		Currencies []RateData `json:"currencies"`
+	}
+	RateData struct {
+		RequestID        string `json:"requestId"`
+		CurrencyCode     string `json:"currencyCode"`     // Валют код
+		CurrencyName     string `json:"currencyName"`     // Валют нэр
+		CashValueSell    string `json:"cashValueSell"`    // Бэлэн ханш авах
+		CashValueBuy     string `json:"cashValueBuy"`     // Бэлэн ханш зарах
+		NonCashValueSell string `json:"nonCashValueSell"` // Бэлэн бус ханш авах
+		NonCashValueBuy  string `json:"nonCashValueBuy"`  // Бэлэн бус ханш зарах
+	}
 )

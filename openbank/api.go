@@ -41,6 +41,12 @@ var (
 		Method:      http.MethodPost,
 		ServiceName: "ACCTBALINQ",
 	}
+
+	UtilityRateAPI = API{
+		Url:         "/v1/utility/rate/inq",
+		Method:      http.MethodPost,
+		ServiceName: "RATEINQ",
+	}
 )
 
 // AuthQPayV2 [Login to qpay]
@@ -183,6 +189,69 @@ func (g *openbank) HttpRequest(body interface{}, api API, urlExt string) (respon
 	}
 
 	return response, nil
+}
+
+func (g *openbank) HttpRequestSimple(body interface{}, api API, urlExt string) (response string, err error) {
+	authObj, authErr := g.auth()
+	if authErr != nil {
+		err = authErr
+		return
+	}
+
+	g.authObject = &authObj
+	postBody, _ := json.Marshal(body)
+	fmt.Println("----------------------body-----------------------")
+	fmt.Println(body)
+	hash := sha256.Sum256(postBody)
+	hex := hex.EncodeToString(hash[:])
+	// checkSum, _ := g.encryptAESCBC(string(hash))
+	checkSum, err := g.EncryptAESCBC(hex)
+	if err != nil {
+		return "", errors.New(err.Error())
+	}
+	var requestByte []byte
+	var requestBody *bytes.Reader
+	if body == nil {
+		requestBody = bytes.NewReader(nil)
+	} else {
+		requestByte, _ = json.Marshal(body)
+		requestBody = bytes.NewReader(requestByte)
+	}
+	if api.ServiceName == "OPERACCTSTA" || api.ServiceName == "ACCTLST" || api.ServiceName == "ACCTBALINQ" {
+		api.Url = strings.Replace(api.Url, "{{clientId}}", g.clientID, 1)
+		api.Url = strings.Replace(api.Url, "{{state}}", g.state, 1)
+		api.Url = strings.Replace(api.Url, "{{scope}}", g.scope, 1)
+	}
+	req, _ := http.NewRequest(api.Method, g.url+api.Url+urlExt, requestBody)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Golomt-Checksum", checkSum)
+	req.Header.Add("X-Golomt-Service", api.ServiceName)
+	req.Header.Add("Authorization", "Bearer "+g.authObject.Token)
+	fmt.Println("-----------------------------Request--------------------------------------------------------")
+	fmt.Println(req)
+	fmt.Println("-----------------------------Request body--------------------------------------------------------")
+	fmt.Println(req.Body)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", errors.New(err.Error())
+	}
+	defer res.Body.Close()
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", errors.New(err.Error())
+	}
+	if res.Status != "200 OK" {
+		response, err = g.DecryptAESCBC(string(resBody))
+		return "", errors.New(string(response))
+	}
+
+	// response, err = g.DecryptAESCBC(string(resBody))
+	// if err != nil {
+	// 	return "", errors.New(err.Error())
+	// }
+
+	return string(resBody), nil
 }
 
 func (g *openbank) HttpOAuthRequest(body interface{}, api API, urlExt string) (OAuthReponse, error) {
